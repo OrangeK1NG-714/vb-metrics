@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VB 使用看板</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>VB 使用看板</h1>
+    <div class="controls">
+      <label>时间范围
+        <select id="range">
+          <option value="7">近 7 天</option>
+          <option value="30" selected>近 30 天</option>
+          <option value="90">近 90 天</option>
+        </select>
+      </label>
+      <span id="updated" class="updated"></span>
+    </div>
+  </header>
+
+  <main>
+    <section id="cards" class="cards" aria-label="各项目今日概览"></section>
+
+    <section class="detail">
+      <div class="detail-head">
+        <h2 id="detail-title">趋势</h2>
+        <div id="tabs" class="tabs" role="tablist"></div>
+        <div class="metric-toggle" role="group" aria-label="指标切换">
+          <button data-metric="dau" class="active">活跃人数</button>
+          <button data-metric="newUsers">新增</button>
+          <button data-metric="events">事件数</button>
+        </div>
+      </div>
+      <div id="chart" class="chart"></div>
+      <table id="table" class="table"></table>
+    </section>
+  </main>
+
+  <script src="/dashboard.js"></script>
+</body>
+</html>
