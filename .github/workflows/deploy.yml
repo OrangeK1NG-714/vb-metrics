@@ -21,7 +21,21 @@ jobs:
     - name: Verify
       run: npm run check
 
-    - name: Deploy to server
+    - name: Push code to server
+      # 服务器连 GitHub 不稳定（GFW 间歇阻断），不再在服务器上 git fetch ——
+      # CI runner 打包直推。务必排除 data/ 和 *.sqlite：服务器上的
+      # /var/www/metrics/data/metrics.sqlite 是生产数据库，绝不能覆盖。
+      run: |
+        mkdir -p ~/.ssh
+        printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        tar czf - \
+          --exclude=.git --exclude=node_modules --exclude=data --exclude="*.sqlite*" \
+          . | ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+          "mkdir -p /var/www/metrics && cd /var/www/metrics && tar xzf -"
+
+    - name: Restart service
       uses: appleboy/ssh-action@v1.0.3
       env:
         METRICS_ADMIN_TOKEN: ${{ secrets.METRICS_ADMIN_TOKEN }}
@@ -34,25 +48,12 @@ jobs:
         script: |
           # 任何一步失败立即中止，不再静默继续
           set -e
-
-          # 创建项目目录
-          mkdir -p /var/www/metrics
           cd /var/www/metrics
 
-          # 同步最新代码；git 失败直接让部署失败，而不是用旧代码继续
-          if [ -d .git ]; then
-            git fetch origin main
-            git reset --hard origin/main
-          else
-            git clone https://github.com/OrangeK1NG-714/vb-metrics.git .
-          fi
-
-          # 如果有 package.json 就安装依赖（metrics 是零依赖，跳过也行）
-          # npm install --production 2>/dev/null || echo "No dependencies"
+          # metrics 零依赖（node:sqlite），无需 npm install
 
           # 用 PM2 启动或重启服务
-          pm2 describe metrics > /dev/null 2>&1
-          if [ $? -eq 0 ]; then
+          if pm2 describe metrics > /dev/null 2>&1; then
             NODE_ENV=production METRICS_HOST=127.0.0.1 METRICS_ADMIN_TOKEN="$METRICS_ADMIN_TOKEN" pm2 restart metrics --update-env
           else
             NODE_ENV=production METRICS_HOST=127.0.0.1 METRICS_ADMIN_TOKEN="$METRICS_ADMIN_TOKEN" pm2 start index.js --name metrics -e /var/log/pm2/metrics-error.log -o /var/log/pm2/metrics-out.log
@@ -60,6 +61,10 @@ jobs:
 
           # 保存 PM2 配置（开机自启）
           pm2 save
+
+          # 部署后真实健康检查
+          sleep 1
+          curl -sf http://127.0.0.1:8787/health
 
           echo "✅ Metrics deployed successfully"
 
