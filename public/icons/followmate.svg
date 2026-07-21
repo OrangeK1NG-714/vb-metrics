@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#60a5fa"/>
+      <stop offset="0.55" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#0891b2"/>
+    </linearGradient>
+    <linearGradient id="badge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4ade80"/>
+      <stop offset="1" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="ds" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#1e3a8a" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <g filter="url(#ds)">
+    <path d="M 116 176 A 40 40 0 0 1 156 136 L 356 136 A 40 40 0 0 1 396 176 L 396 296 A 40 40 0 0 1 356 336 L 236 336 L 176 396 L 176 336 L 156 336 A 40 40 0 0 1 116 296 Z" fill="#ffffff"/>
+  </g>
+  <rect x="162" y="196" width="188" height="26" rx="13" fill="#3b82f6"/>
+  <rect x="162" y="252" width="128" height="26" rx="13" fill="#93c5fd"/>
+  <g filter="url(#ds)">
+    <circle cx="378" cy="362" r="68" fill="url(#badge)"/>
+  </g>
+  <path d="M 346 362 L 368 386 L 412 334" fill="none" stroke="#ffffff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect width="512" height="512" rx="116" fill="url(#gloss)"/>
+</svg>
