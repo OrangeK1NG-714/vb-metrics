@@ -114,3 +114,33 @@ main { padding: 24px 28px; max-width: 1100px; margin: 0 auto; }
 .table th, .table td { text-align: right; padding: 8px 10px; border-bottom: 1px solid var(--line); }
 .table th:first-child, .table td:first-child { text-align: left; color: var(--muted); }
 .table th { color: var(--muted); font-weight: 500; }
+
+/* card last-seen / live status */
+.card .last-seen {
+  display: flex; align-items: center; gap: 6px;
+  color: var(--muted); font-size: 12px; margin-top: 10px;
+  padding-top: 10px; border-top: 1px solid var(--line);
+}
+.card .last-seen.dormant { color: var(--down); }
+.card.is-dormant { opacity: .82; }
+.dot-live { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.dot-live.live { background: var(--up); box-shadow: 0 0 0 3px rgba(63,185,80,.18); }
+.dot-live.dormant { background: var(--muted); }
+
+/* recent activity feed */
+.activity { margin-top: 28px; }
+.feed { list-style: none; margin: 0; padding: 0; }
+.feed-empty { color: var(--muted); padding: 24px; text-align: center; font-size: 13px; }
+.feed-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 4px; border-bottom: 1px solid var(--line); font-size: 13px;
+}
+.feed-row:last-child { border-bottom: none; }
+.dot-proj { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.feed-proj { min-width: 130px; color: var(--text); }
+.feed-event {
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 6px; padding: 2px 8px; font-size: 12px; color: var(--accent);
+}
+.feed-user { color: var(--muted); font-size: 12px; }
+.feed-time { margin-left: auto; color: var(--muted); font-size: 12px; }

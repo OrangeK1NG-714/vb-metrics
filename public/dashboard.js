@@ -26,8 +26,26 @@ const state = {
   metric: "dau",
   compare: false,
   loading: false,
-  error: null
+  error: null,
+  recent: [], // newest-first list of {project,event,anon_id,ts,day}
+  lastSeen: {} // project -> unix ms of most recent event
 };
+
+// A project with no event for this long reads as "沉寂" (dormant) on its card.
+const DORMANT_MS = 24 * 60 * 60 * 1000;
+
+// Compact "刚刚 / N 分钟前 / N 小时前 / N 天前" from a unix-ms timestamp.
+function timeAgo(ts) {
+  if (!Number.isFinite(ts)) return "从无数据";
+  const diff = Date.now() - ts;
+  if (diff < 60000) return "刚刚";
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins} 分钟前`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} 小时前`;
+  const days = Math.floor(hours / 24);
+  return `${days} 天前`;
+}
 
 function todayKey() {
   const d = new Date();
@@ -69,10 +87,20 @@ async function load() {
   if (refreshBtn) refreshBtn.disabled = true;
   if (!state.projects.length) setStatus("loading", "加载中…");
   try {
-    const res = await fetch(`/api/summary?days=${state.days}`);
+    const [res, recentRes] = await Promise.all([
+      fetch(`/api/summary?days=${state.days}`),
+      fetch(`/api/recent?limit=50`).catch(() => null)
+    ]);
     if (!res.ok) throw new Error(`服务返回 ${res.status}`);
     const json = await res.json();
     if (!json || json.ok === false) throw new Error(json && json.error ? json.error : "响应无效");
+    if (recentRes && recentRes.ok) {
+      const rj = await recentRes.json().catch(() => null);
+      if (rj && rj.ok !== false) {
+        state.recent = rj.rows || [];
+        state.lastSeen = rj.lastSeen || {};
+      }
+    }
     state.projects = json.projects || [];
     state.byProject = {};
     for (const p of state.projects) state.byProject[p] = {};
@@ -118,13 +146,18 @@ function renderCards() {
     const totalNew = Object.values(days).reduce((s, r) => s + r.newUsers, 0);
     const cls = diff > 0 ? "up" : diff < 0 ? "down" : "flat";
     const arrow = diff > 0 ? "▲" : diff < 0 ? "▼" : "—";
+    const seen = state.lastSeen[p];
+    const dormant = !Number.isFinite(seen) || (Date.now() - seen) > DORMANT_MS;
+    const liveDot = `<span class="dot-live ${dormant ? "dormant" : "live"}"></span>`;
+    const seenText = liveDot + "最近使用 " + timeAgo(seen);
     const card = document.createElement("div");
-    card.className = "card" + (p === state.selected ? " active" : "");
+    card.className = "card" + (p === state.selected ? " active" : "") + (dormant ? " is-dormant" : "");
     card.innerHTML = `
       <div class="name">${PROJECT_LABELS[p] || p}</div>
       <div class="dau">${todayDau}<small>今日活跃</small></div>
       <div class="delta ${cls}">${arrow} 较昨日 ${diff >= 0 ? "+" : ""}${diff}</div>
-      <div class="sub">近${state.days}天新增 ${totalNew} 人</div>`;
+      <div class="sub">近${state.days}天新增 ${totalNew} 人</div>
+      <div class="last-seen ${dormant ? "dormant" : ""}">${seenText}</div>`;
     card.addEventListener("click", () => { state.selected = p; render(); });
     el.appendChild(card);
   }
@@ -307,6 +340,31 @@ function renderTable() {
   table.innerHTML = `<thead><tr><th>日期</th><th>活跃人数</th><th>新增</th><th>事件数</th></tr></thead><tbody>${rows}</tbody>`;
 }
 
+// ─── recent activity feed ────────────────────────────────────────────────────
+
+function renderFeed() {
+  const feed = document.getElementById("feed");
+  const hint = document.getElementById("activity-hint");
+  if (!feed) return;
+  const rows = state.recent || [];
+  if (hint) hint.textContent = rows.length ? `最新 ${rows.length} 条` : "";
+  if (!rows.length) {
+    feed.innerHTML = '<li class="feed-empty">还没有任何事件 — 各端上报后会实时出现在这里</li>';
+    return;
+  }
+  feed.innerHTML = rows.map((r) => {
+    const name = PROJECT_LABELS[r.project] || r.project;
+    const who = r.anon_id ? r.anon_id.slice(0, 8) : "匿名";
+    return `<li class="feed-row">
+      <span class="dot-proj" style="background:${colorOf(r.project)}"></span>
+      <span class="feed-proj">${name}</span>
+      <span class="feed-event">${r.event}</span>
+      <span class="feed-user">用户 ${who}</span>
+      <span class="feed-time">${timeAgo(r.ts)}</span>
+    </li>`;
+  }).join("");
+}
+
 // ─── tabs + compare toggle ───────────────────────────────────────────────────
 
 function renderTabs() {
@@ -339,6 +397,7 @@ function render() {
   renderLegend();
   renderChart();
   renderTable();
+  renderFeed();
   document.getElementById("updated").textContent = "更新于 " + new Date().toLocaleTimeString("zh-CN");
 }
 

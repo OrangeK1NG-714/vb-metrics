@@ -133,4 +133,17 @@ describe("http handler", () => {
     assert.equal(res.statusCode, 200);
     assert.equal(JSON.parse(res.body).ok, true);
   });
+
+  it("GET /api/recent returns newest-first rows and per-project lastSeen", () => {
+    const { handler, store } = createApp({ dbFile: ":memory:" });
+    store.record({ project: "pet-mbti", event: "open", anonId: "u1", ts: 1000 });
+    store.record({ project: "id-photo", event: "paid", anonId: "u2", ts: 2000 });
+    const res = fireGet(handler, "/api/recent?limit=10");
+    const json = JSON.parse(res.body);
+    assert.equal(res.statusCode, 200);
+    assert.equal(json.ok, true);
+    assert.equal(json.rows[0].project, "id-photo", "newest event first");
+    assert.equal(json.lastSeen["id-photo"], 2000);
+    assert.equal(json.lastSeen["pet-mbti"], 1000);
+  });
 });
