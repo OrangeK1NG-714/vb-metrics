@@ -72,11 +72,29 @@ function createStore(filename) {
     return dayKey(d.getTime());
   }
 
+  // Last N events across all projects, newest first.
+  function recent(limit) {
+    const n = Math.max(1, Math.min(200, Number(limit) || 50));
+    return database.prepare(
+      `SELECT project, event, anon_id, ts, day FROM events ORDER BY ts DESC LIMIT ?`
+    ).all(n);
+  }
+
+  // Per-project: unix ms of the most recent event.
+  function lastSeen() {
+    const rows = database.prepare(
+      `SELECT project, MAX(ts) AS ts FROM events GROUP BY project`
+    ).all();
+    const out = {};
+    for (const r of rows) out[r.project] = r.ts;
+    return out;
+  }
+
   function close() {
     database.close();
   }
 
-  return { record, summary, dayKey, close, database };
+  return { record, summary, recent, lastSeen, dayKey, close, database };
 }
 
 module.exports = { createStore, PROJECTS };

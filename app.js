@@ -105,6 +105,12 @@ function createApp({ dbFile = ':memory:', store } = {}) {
       return send(res, 200, { ok: true, projects: PROJECTS, rows }, cors);
     }
 
+    if (req.method === 'GET' && url.pathname === '/api/recent') {
+      const rows = dataStore.recent(url.searchParams.get('limit'));
+      const lastSeen = dataStore.lastSeen();
+      return send(res, 200, { ok: true, rows, lastSeen }, cors);
+    }
+
     if (req.method === 'GET' && url.pathname === '/health') {
       return send(res, 200, { ok: true }, cors);
     }

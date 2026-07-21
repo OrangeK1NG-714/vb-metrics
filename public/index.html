@@ -17,9 +17,12 @@
           <option value="90">近 90 天</option>
         </select>
       </label>
+      <button id="refresh" class="refresh" type="button" title="立即刷新">刷新</button>
       <span id="updated" class="updated"></span>
     </div>
   </header>
+
+  <div id="status" class="status" role="status" aria-live="polite" hidden></div>
 
   <main>
     <section id="cards" class="cards" aria-label="各项目今日概览"></section>
@@ -34,7 +37,13 @@
           <button data-metric="events">事件数</button>
         </div>
       </div>
-      <div id="chart" class="chart"></div>
+
+      <div id="stats" class="stats" aria-label="区间概览指标"></div>
+      <div id="legend" class="legend" aria-label="项目图例" hidden></div>
+
+      <div id="chart" class="chart">
+        <div id="tooltip" class="tooltip" hidden></div>
+      </div>
       <table id="table" class="table"></table>
     </section>
   </main>
