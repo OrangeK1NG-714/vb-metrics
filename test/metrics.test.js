@@ -70,7 +70,7 @@ describe("createStore – record & summary", () => {
 
 describe("validate", () => {
   it("accepts a well-formed payload", () => {
-    const r = validate({ project: "pet-mbti", event: "open", anonId: "u1" });
+    const r = validate({ project: "pet-mbti", event: "start", anonId: "u1" });
     assert.equal(typeof r, "object");
     assert.equal(r.project, "pet-mbti");
   });
@@ -86,7 +86,7 @@ describe("validate", () => {
   });
 
   it("rejects missing anonId", () => {
-    assert.equal(validate({ project: "pet-mbti", event: "open" }), "invalid_anon_id");
+    assert.equal(validate({ project: "pet-mbti", event: "start" }), "invalid_anon_id");
   });
 
   it("rejects over-long event", () => {
@@ -94,9 +94,17 @@ describe("validate", () => {
   });
 
   it("every whitelisted project validates", () => {
+    const events = { greenpoly: "page_view", "pet-mbti": "start", "id-photo": "open", followmate: "open" };
     for (const p of PROJECTS) {
-      assert.equal(typeof validate({ project: p, event: "open", anonId: "u1" }), "object");
+      assert.equal(typeof validate({ project: p, event: events[p], anonId: "u1" }), "object");
     }
+  });
+
+  it("rejects unknown events and oversized properties", () => {
+    assert.equal(validate({ project: "pet-mbti", event: "open", anonId: "u1" }), "invalid_event");
+    assert.equal(validate({
+      project: "pet-mbti", event: "start", anonId: "u1", props: { value: "x".repeat(513) }
+    }), "invalid_props");
   });
 });
 
@@ -110,8 +118,34 @@ function mockRes() {
   };
 }
 
-function fireGet(handler, url) {
-  const req = { method: "GET", url, on() {} };
+function fireGet(handler, url, headers = {}) {
+  const req = { method: "GET", url, headers, socket: { remoteAddress: "127.0.0.1" }, on() {} };
+  const res = mockRes();
+  handler(req, res);
+  return res;
+}
+
+function fireGetAsync(handler, url, headers = {}) {
+  return new Promise((resolve) => {
+    const req = { method: "GET", url, headers, socket: { remoteAddress: "127.0.0.1" }, on() {} };
+    const res = mockRes();
+    const end = res.end;
+    res.end = function finish(body) {
+      end.call(this, body);
+      resolve(this);
+    };
+    handler(req, res);
+  });
+}
+
+function fireOptions(handler, origin) {
+  const req = {
+    method: "OPTIONS",
+    url: "/api/collect",
+    headers: { origin },
+    socket: { remoteAddress: "127.0.0.1" },
+    on() {}
+  };
   const res = mockRes();
   handler(req, res);
   return res;
@@ -132,6 +166,15 @@ describe("http handler", () => {
     const res = fireGet(handler, "/health");
     assert.equal(res.statusCode, 200);
     assert.equal(JSON.parse(res.body).ok, true);
+    assert.match(res.headers["content-security-policy"], /default-src 'self'/);
+  });
+
+  it("serves the dashboard with security headers", async () => {
+    const { handler } = createApp({ dbFile: ":memory:" });
+    const res = await fireGetAsync(handler, "/");
+    assert.equal(res.statusCode, 200);
+    assert.match(res.headers["content-security-policy"], /frame-ancestors 'none'/);
+    assert.equal(res.headers["x-content-type-options"], "nosniff");
   });
 
   it("GET /api/recent returns newest-first rows and per-project lastSeen", () => {
@@ -145,5 +188,26 @@ describe("http handler", () => {
     assert.equal(json.rows[0].project, "id-photo", "newest event first");
     assert.equal(json.lastSeen["id-photo"], 2000);
     assert.equal(json.lastSeen["pet-mbti"], 1000);
+  });
+
+  it("protects read APIs with an admin token", () => {
+    const { handler } = createApp({ dbFile: ":memory:", adminToken: "a".repeat(32) });
+    assert.equal(fireGet(handler, "/api/summary").statusCode, 401);
+    const allowed = fireGet(handler, "/api/summary", { authorization: `Bearer ${"a".repeat(32)}` });
+    assert.equal(allowed.statusCode, 200);
+  });
+
+  it("rate limits dashboard reads", () => {
+    const { handler } = createApp({ dbFile: ":memory:", readRateLimit: 1 });
+    assert.equal(fireGet(handler, "/api/summary").statusCode, 200);
+    assert.equal(fireGet(handler, "/api/summary").statusCode, 429);
+  });
+
+  it("rejects foreign CORS origins and reflects exact allowed origins", () => {
+    const { handler } = createApp({ dbFile: ":memory:", allowedOrigins: ["https://pet.example.com"] });
+    assert.equal(fireOptions(handler, "https://attacker.example").statusCode, 403);
+    const allowed = fireOptions(handler, "https://pet.example.com");
+    assert.equal(allowed.statusCode, 204);
+    assert.equal(allowed.headers["access-control-allow-origin"], "https://pet.example.com");
   });
 });

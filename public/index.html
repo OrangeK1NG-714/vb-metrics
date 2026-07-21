@@ -18,6 +18,13 @@
         </select>
       </label>
       <button id="refresh" class="refresh" type="button" title="立即刷新">刷新</button>
+      <form id="auth-form" class="auth-form" hidden>
+        <label>访问令牌
+          <input id="admin-token" type="password" autocomplete="current-password" required />
+        </label>
+        <button class="refresh" type="submit">解锁</button>
+      </form>
+      <button id="lock-dashboard" class="refresh" type="button" hidden>锁定</button>
       <span id="updated" class="updated"></span>
     </div>
   </header>

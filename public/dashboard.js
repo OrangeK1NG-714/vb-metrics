@@ -17,6 +17,17 @@ const PROJECT_COLORS = {
 const FALLBACK_COLOR = "#8b98a5";
 
 const METRIC_LABELS = { dau: "活跃人数", newUsers: "新增", events: "事件数" };
+let adminToken = "";
+
+function apiFetch(url) {
+  const headers = adminToken ? { authorization: `Bearer ${adminToken}` } : {};
+  return fetch(url, { headers });
+}
+
+function showAuth(required) {
+  document.getElementById("auth-form").hidden = !required;
+  document.getElementById("lock-dashboard").hidden = required || !adminToken;
+}
 
 const state = {
   days: 30,
@@ -88,9 +99,13 @@ async function load() {
   if (!state.projects.length) setStatus("loading", "加载中…");
   try {
     const [res, recentRes] = await Promise.all([
-      fetch(`/api/summary?days=${state.days}`),
-      fetch(`/api/recent?limit=50`).catch(() => null)
+      apiFetch(`/api/summary?days=${state.days}`),
+      apiFetch(`/api/recent?limit=50`).catch(() => null)
     ]);
+    if (res.status === 401) {
+      showAuth(true);
+      throw new Error("需要访问令牌");
+    }
     if (!res.ok) throw new Error(`服务返回 ${res.status}`);
     const json = await res.json();
     if (!json || json.ok === false) throw new Error(json && json.error ? json.error : "响应无效");
@@ -112,6 +127,7 @@ async function load() {
       state.selected = state.projects[0] || null;
     }
     state.error = null;
+    showAuth(false);
     setStatus(null);
     render();
   } catch (err) {
@@ -408,6 +424,17 @@ document.getElementById("range").addEventListener("change", (e) => {
   load();
 });
 document.getElementById("refresh").addEventListener("click", () => load());
+document.getElementById("auth-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const input = document.getElementById("admin-token");
+  adminToken = input.value.trim();
+  input.value = "";
+  load();
+});
+document.getElementById("lock-dashboard").addEventListener("click", () => {
+  adminToken = "";
+  showAuth(true);
+});
 document.querySelectorAll(".metric-toggle button").forEach((b) => {
   b.addEventListener("click", () => {
     state.metric = b.dataset.metric;
@@ -418,6 +445,5 @@ document.querySelectorAll(".metric-toggle button").forEach((b) => {
 
 load();
 setInterval(() => { if (!state.loading) load(); }, 60000);
-
 
 

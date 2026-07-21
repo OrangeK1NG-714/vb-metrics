@@ -12,6 +12,15 @@ npm start                 # http://localhost:8787
 # 可选：PORT=9000 METRICS_DB=/path/to.sqlite npm start
 ```
 
+服务默认只监听 `127.0.0.1`。生产环境或显式设置 `METRICS_HOST=0.0.0.0` 时，必须同时设置至少 32 字节的 `METRICS_ADMIN_TOKEN`；看板会要求输入令牌，令牌只保存在当前页面内存中。跨域采集来源使用逗号分隔的 HTTPS origin 配置 `METRICS_ALLOWED_ORIGINS`，反向代理场景才设置 `METRICS_TRUST_PROXY=true`，并必须用防火墙阻止绕过代理直连源站。
+
+```bash
+METRICS_HOST=0.0.0.0 \
+METRICS_ADMIN_TOKEN='<32+ byte random secret>' \
+METRICS_ALLOWED_ORIGINS='https://greenpoly.com,https://pet.example.com' \
+npm start
+```
+
 数据库默认落在 `metrics/data/metrics.sqlite`（已在 .gitignore 忽略）。
 
 ## 测试

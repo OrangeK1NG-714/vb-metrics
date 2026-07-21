@@ -11,20 +11,26 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Setup Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7
       with:
         node-version: '22'
 
+    - name: Verify
+      run: npm run check
+
     - name: Deploy to server
       uses: appleboy/ssh-action@v1.0.3
+      env:
+        METRICS_ADMIN_TOKEN: ${{ secrets.METRICS_ADMIN_TOKEN }}
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
+        envs: METRICS_ADMIN_TOKEN
         script: |
           # 创建项目目录
           mkdir -p /var/www/metrics
@@ -39,9 +45,9 @@ jobs:
           # 用 PM2 启动或重启服务
           pm2 describe metrics > /dev/null 2>&1
           if [ $? -eq 0 ]; then
-            pm2 restart metrics
+            NODE_ENV=production METRICS_HOST=127.0.0.1 METRICS_ADMIN_TOKEN="$METRICS_ADMIN_TOKEN" pm2 restart metrics --update-env
           else
-            pm2 start index.js --name metrics -e /var/log/pm2/metrics-error.log -o /var/log/pm2/metrics-out.log
+            NODE_ENV=production METRICS_HOST=127.0.0.1 METRICS_ADMIN_TOKEN="$METRICS_ADMIN_TOKEN" pm2 start index.js --name metrics -e /var/log/pm2/metrics-error.log -o /var/log/pm2/metrics-out.log
           fi
 
           # 保存 PM2 配置（开机自启）
