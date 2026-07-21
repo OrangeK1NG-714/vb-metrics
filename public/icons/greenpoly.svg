@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#15803d"/>
+  <!-- 循环箭头：三段弧 -->
+  <g fill="none" stroke="#ffffff" stroke-width="26" stroke-linecap="round">
+    <path d="M 256 118 A 138 138 0 0 1 375 188"/>
+    <path d="M 394 232 A 138 138 0 0 1 314 362"/>
+    <path d="M 198 362 A 138 138 0 0 1 137 188"/>
+  </g>
+  <!-- 箭头尖 -->
+  <g fill="#ffffff">
+    <path d="M 388 160 L 398 214 L 344 204 Z"/>
+    <path d="M 340 384 L 286 374 L 316 326 Z"/>
+    <path d="M 172 384 L 118 374 L 168 326 Z" transform="translate(20,0)"/>
+  </g>
+  <!-- 三颗粒子（塑料颗粒） -->
+  <g fill="#bbf7d0">
+    <circle cx="256" cy="196" r="34"/>
+    <circle cx="204" cy="288" r="34"/>
+    <circle cx="308" cy="288" r="34"/>
+  </g>
+</svg>

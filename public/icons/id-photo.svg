@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#4f46e5"/>
+  <!-- 证件卡片 -->
+  <rect x="96" y="136" width="320" height="240" rx="28" fill="#ffffff"/>
+  <!-- 人像：头 + 肩 -->
+  <circle cx="196" cy="228" r="36" fill="#4f46e5"/>
+  <path d="M 140 320 A 56 56 0 0 1 252 320 Z" fill="#4f46e5"/>
+  <!-- 信息行 -->
+  <rect x="286" y="196" width="96" height="18" rx="9" fill="#c7d2fe"/>
+  <rect x="286" y="234" width="72" height="18" rx="9" fill="#c7d2fe"/>
+  <rect x="286" y="272" width="96" height="18" rx="9" fill="#c7d2fe"/>
+  <!-- 相机快门角标 -->
+  <circle cx="392" cy="352" r="52" fill="#312e81"/>
+  <circle cx="392" cy="352" r="44" fill="#ffffff"/>
+  <circle cx="392" cy="352" r="30" fill="#4f46e5"/>
+  <circle cx="392" cy="352" r="14" fill="#c7d2fe"/>
+</svg>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0f172a"/>
+  <!-- 柱状图 -->
+  <rect x="120" y="280" width="52" height="116" rx="12" fill="#38bdf8"/>
+  <rect x="196" y="224" width="52" height="172" rx="12" fill="#34d399"/>
+  <rect x="272" y="168" width="52" height="228" rx="12" fill="#fbbf24"/>
+  <rect x="348" y="116" width="52" height="280" rx="12" fill="#fb7185"/>
+  <!-- 趋势线 -->
+  <path d="M 136 240 L 232 180 L 308 128 L 384 76" fill="none" stroke="#e2e8f0" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="384" cy="76" r="16" fill="#e2e8f0"/>
+</svg>
