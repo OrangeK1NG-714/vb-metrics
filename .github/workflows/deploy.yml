@@ -69,8 +69,8 @@ jobs:
         BARK_KEY: ${{ secrets.BARK_KEY }}
       run: |
         if [ -z "$BARK_KEY" ]; then echo "BARK_KEY 未配置，跳过通知"; exit 0; fi
-        if [ "${{ job.status }}" = "success" ]; then ICON="✅"; else ICON="❌"; fi
+        if [ "${{ job.status }}" = "success" ]; then ICON="✅"; RESULT="成功"; else ICON="❌"; RESULT="失败"; fi
         curl -fsS -m 10 -X POST "https://api.day.app/push" \
           -H "Content-Type: application/json; charset=utf-8" \
-          -d "{\"device_key\":\"$BARK_KEY\",\"title\":\"$ICON ${{ github.repository }}\",\"body\":\"${{ github.workflow }} · ${{ github.ref_name }} · ${{ job.status }} · ${GITHUB_SHA:0:7}\",\"group\":\"GitHub CI\",\"icon\":\"https://stats.richardq.tech/icons/metrics.png\",\"url\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+          -d "{\"device_key\":\"$BARK_KEY\",\"title\":\"$ICON ${{ github.repository }} $RESULT\",\"body\":\"工作流：${{ github.workflow }} · 分支：${{ github.ref_name }} · 提交：${GITHUB_SHA:0:7}\",\"group\":\"GitHub CI\",\"icon\":\"https://stats.richardq.tech/icons/metrics.png\",\"url\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
           || echo "Bark 通知发送失败（不影响构建）"
