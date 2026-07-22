@@ -1,0 +1,29 @@
+name: CI
+
+# PR 与非主分支 push 时只做构建验证和测试，不部署；
+# main 分支的 push 由 deploy.yml 负责（含同样的检查 + 部署）。
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches-ignore: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v7
+      with:
+        node-version: '22'
+
+    - name: Run checks
+      # metrics 零依赖（node:sqlite），npm run check = 全文件语法检查 + node --test
+      run: npm run check
