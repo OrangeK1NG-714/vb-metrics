@@ -74,8 +74,22 @@ jobs:
         BARK_KEY: ${{ secrets.BARK_KEY }}
       run: |
         if [ -z "$BARK_KEY" ]; then echo "BARK_KEY 未配置，跳过通知"; exit 0; fi
-        if [ "${{ job.status }}" = "success" ]; then ICON="✅"; RESULT="成功"; else ICON="❌"; RESULT="失败"; fi
-        curl -fsS -m 10 -X POST "https://api.day.app/push" \
-          -H "Content-Type: application/json; charset=utf-8" \
-          -d "{\"device_key\":\"$BARK_KEY\",\"title\":\"$ICON ${{ github.repository }} $RESULT\",\"body\":\"工作流：${{ github.workflow }} · 分支：${{ github.ref_name }} · 提交：${GITHUB_SHA:0:7}\",\"group\":\"GitHub CI\",\"icon\":\"https://stats.richardq.tech/icons/metrics.png\",\"url\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+        if [ "${{ job.status }}" = "success" ]; then
+          RESULT="成功"; LEVEL="active"; SOUND="minuet"; GROUP="CI/CD · 成功"
+        else
+          RESULT="失败"; LEVEL="timeSensitive"; SOUND="alarm"; GROUP="CI/CD · 失败"
+        fi
+        jq -n \
+          --arg key "$BARK_KEY" \
+          --arg title "部署$RESULT · Metrics Dashboard" \
+          --arg body "分支：${{ github.ref_name }} · 提交：${GITHUB_SHA:0:7} · 点击查看运行详情" \
+          --arg group "$GROUP" \
+          --arg level "$LEVEL" \
+          --arg sound "$SOUND" \
+          --arg id "cicd-${{ github.repository_id }}-deploy" \
+          --arg icon "https://stats.richardq.tech/icon-metrics.png" \
+          --arg url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+          '{device_key:$key,title:$title,subtitle:"GitHub Actions",body:$body,group:$group,level:$level,sound:$sound,id:$id,icon:$icon,url:$url,isArchive:"1"}' \
+          | curl -fsS -m 10 -X POST "https://api.day.app/push" \
+              -H "Content-Type: application/json; charset=utf-8" -d @- \
           || echo "Bark 通知发送失败（不影响构建）"
